@@ -1,0 +1,30 @@
+# RM-SB — Design
+
+Interface métier française : navigation marine #092c40, accent vert #2c8b50, fond #f5f7f8, surfaces blanches et bordures fines. Logo fourni intégré à la navigation, connexion et rapports.
+Poppins auto-hébergée, titres 28px, corps 13px, chiffres 30px. Navigation 248px, espacement 24px, angles 10px. KPI horizontaux, graphiques asymétriques, tables denses. États vides explicites sans données inventées.
+Pouzzolane vert, granite marine, opérations spéciales ocre. Boutons primaires verts, secondaires bordés. Installation toujours accessible, statut hors ligne visible. Responsive à une colonne avec navigation escamotable.
+Neuf modules : Dashboard, Import DDS, Transactions, Reverse Logistics, Opérations Spéciales, 3rd Party, Planification, Rapports, Paramètres.
+Architecture : packages/web React TypeScript ; Dexie IndexedDB pour transactions, plans, paramètres, imports et comptes. Préférences localStorage, session sessionStorage. Aucune API métier/cloud nécessaire. Service worker Workbox, exports locaux PDF/Excel/Word et sauvegardes JSON/Excel. Date de sortie et démarrage vide.
+
+## Parcours
+Connexion locale → Import DDS + Ops Spe (deux fichiers obligatoires) → contrôle de la paire → classification automatique → Correspondance Ops Spe → objectifs journaliers → synthèses et exports → sauvegarde.
+
+## Mise à jour Ops Spe
+Conserver les surfaces et composants actuels. Deux cartes de fichiers avec boutons Importer DDS / Importer Ops Spe, analyse et validation atomique. Une table dédiée affiche ATC Ops Spe, Trouvé dans DDS, Statut, date et source ; filtres et pagination. Aucun contrôle d’affectation manuelle. Référentiel officiel cumulatif à ATC unique pour préserver les mois historiques ; périodes calculées par dates. Priorité Ops Spe > DANTRANS > tiers. Migration locale sans effacer comptes, données ni objectifs. Sauvegardes v2 avec compatibilité v1.
+
+## Composants
+Sidebar et header dans pages/workspace.tsx. Primitives Panel, Kpi, Badge, Empty, Modal dans components/shared.tsx. Graphiques Recharts, formulaire de planification par date, tables triables paginées. Dialogues natifs accessibles.
+
+## Seuils
+Rouge < 50 %, orange de 50 % à moins de 90 %, vert ≥ 90 %. En l’absence d’objectif, afficher Non planifié et ne jamais diviser par zéro.
+
+## Réinitialisation des imports
+Dans Paramètres, zone de vigilance visible uniquement pour ADMIN. Bouton Réinitialiser, puis dialogue de confirmation explicite : suppression de tous les voyages DDS, références Ops Spe et journaux d’import, toutes périodes ; comptes, mots de passe, paramètres et objectifs conservés. Avertissement et recommandation de sauvegarde. Suppression atomique locale, aucun effacement effectué à la livraison.
+
+## Carburant, DUT et planification direction
+Navigation enrichie Gestion Carburant / Gestion DUT. Carburant : onglets Nouvelle Réservation, Historique, Consommation, Stock et Rapports ; réservations horodatées Côte d’Ivoire, stock initial une seule fois, FIFO strict Exit Time > horodatage lot. Déficit de couverture explicite, aucun double comptage. DUT : toutes références officielles, même Manquant DDS ; identifiant normalisé unique, 2500 FCFA par défaut, prix modifiable ADMIN, audit des ATC et exports.
+Planification : reproduire les deux tableaux Excel groupés Planned/Actual/Gap/Achievement avec sous-colonnes Pozzolana/Granite, Sunday–Saturday, commentaires dans le premier tableau, titres anglais direction et synthèse inférieure. Sélecteurs mois/année/semaine mensuelle ; semaine 1 contient le 1er même si dimanche dans le mois précédent. Tables denses marine #074b60, lignes Sunday/Saturday tonnage surlignées jaune doux, écarts négatifs rouges, totaux gras. État Non planifié sans division par zéro.
+Dexie v3 : réservations et stock initial, DUT sur référence Ops Spe, commentaires par date, paramètres DUT ; sauvegardes v3 JSON/Excel compatibles v1/v2. Aucune suppression de réservations lors du reset des imports ; avertir que consommations dérivées reviennent à zéro.
+Historique carburant : actions Modifier / Supprimer en première colonne pour rester accessibles même sur une table large. Édition via formulaire prérempli, annulation explicite, suppression via dialogue avec numéro et quantité, avertissement de recalcul FIFO. Stock initial et date d'ouverture restent indépendants et conservés. ADMIN/SUPERVISER autorisés, CONSULTANT lecture seule. ATC couverts et commentaires repliés sur plusieurs lignes pour limiter la largeur.
+Stock feuilles DUT : section dédiée au-dessus des coûts existants, KPI reçu/utilisé/disponible/stock initial. Nouvelle réception et historique avec modifier/supprimer en première colonne ; formulaire date, nombre reçu, disponible avant/après calculés, commentaire, stock initial saisi une seule fois à la première réception. Réception disponible au début de sa journée ; utilisation unique globale à la première date connue (Exit Time DDS sinon Date Ops Spe), avant démarrage non déduite, sans date signalée et non déduite. Tableau d'utilisation pour audit. Soldes cumulés à la fin de période, historique filtré par période ; déficits explicites. Dexie v4, reçus et ouverture dans sauvegardes JSON/Excel ; prix DUT indépendant du stock physique, données conservées lors du reset des imports.
+Révision validée : carburant Ops Spe lu de la colonne Carburant par ATC, corrections locales persistantes prioritaires (0 L valide), cellule vide/invalide = À renseigner sans déduction ni coefficient de remplacement. Reverse Log : saisie par ATC, suivi séparé sans déduction du stock Ops Spe. Tous les indicateurs et rapports excluent le carburant 3rd Party ; seules rotations/tonnes sont suivies pour ces tiers. ADMIN peut réinitialiser réservations et ouverture carburant avec confirmation, sans effacer imports, litrages, DUT ou comptes. Dexie v5 pour litrages manuels séparés ops/reverse. Planification : nouvelles semaines mensuelles 1–7/8–14/15–21/22–28/29–fin (max 5), jours réels et dernières semaines tronquées, jamais de chevauchement avec le mois suivant. Objectifs/commentaires restent par date, aucun effacement de l'historique.
